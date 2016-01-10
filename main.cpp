@@ -3,42 +3,97 @@
 
 #include "ui_mainwindow.h"
 
+class Settings : public QSettings
+{
+public:
+    Settings()
+        : QSettings(QSettings::UserScope,"SkypeVideoDownloader")
+    {
+    }
+};
+
+namespace {
+}
+
 class MainWindow : public QWidget
 {
   Q_OBJECT
 public:
-  MainWindow(QWidget *parent = 0)
-    : QWidget(parent)
-  {
-    ui.setupUi(this);
+  MainWindow(QWidget *parent = 0);
 
-    ui.databaseFile->setText("C:/Users/Admin/AppData/Roaming/Skype/alex-krutikov/main.db");
+private:
+  void writeSettings();
+  void readSettings();
+  void closeEvent(QCloseEvent *event);
 
-    connect(ui.databaseGetVideos, SIGNAL(clicked(bool)), this, SLOT(onGetVideosClicked()));
-
-    resize(600, 800);
-  }
 private slots:
   void onGetVideosClicked();
 private:
   Ui::MainWindow ui;
 };
 
+MainWindow::MainWindow(QWidget *parent)
+  : QWidget(parent)
+{
+  ui.setupUi(this);
+
+  connect(ui.pb_getVideos, SIGNAL(clicked(bool)), this, SLOT(onGetVideosClicked()));
+
+  readSettings();
+}
+
+void MainWindow::writeSettings()
+{
+    Settings settings;
+
+    settings.beginGroup("MainWindow");
+    settings.setValue("size", size());
+    settings.setValue("pos", pos());
+    settings.endGroup();
+
+    settings.setValue("database_filename", ui.le_dbFilenname->text());
+    settings.setValue("output_dir", ui.le_outputDir->text());
+}
+
+void MainWindow::readSettings()
+{
+    Settings settings;
+
+    settings.beginGroup("MainWindow");
+    resize(settings.value("size", QSize(400, 400)).toSize());
+    move(settings.value("pos", QPoint(200, 200)).toPoint());
+    settings.endGroup();
+
+    ui.le_dbFilenname->setText(settings.value("database_filename"
+          , "C:/Users/Admin/AppData/Roaming/Skype/alex-krutikov/main.db").toString());
+    ui.le_outputDir->setText(settings.value("output_dir", "").toString());
+}
+
 void MainWindow::onGetVideosClicked()
 {
-    const QString filename = ui.databaseFile->text();
+    ui.label_statusline->clear();
+
+    const QString filename = ui.le_dbFilenname->text();
     QFileInfo checkFile(filename);
-    if (!checkFile.isFile())
-      return;
+    if (!checkFile.isFile())    {
+        ui.label_statusline->setText("Cannot open database file.");
+        return;
+    }
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(filename);
     const bool ok = db.open();
-    if (!ok)
-      return;
+    if (!ok) {
+        ui.label_statusline->setText("Cannot read database file.");
+        return;
+    }
 
     QSqlQuery query;
-    query.exec("SELECT id, vod_path FROM VideoMessages");
+    if (!query.exec("SELECT id, vod_path FROM VideoMessages")) {
+        db.close();
+        ui.label_statusline->setText("Cannot query video path from database.");
+        return;
+    }
     while (query.next()) {
         const QString id = query.value(0).toString();
         const QString vodPath = query.value(1).toString();
@@ -47,6 +102,12 @@ void MainWindow::onGetVideosClicked()
 
 
     db.close();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    writeSettings();
+    event->accept();
 }
 
 int main(int argc, char **argv)
