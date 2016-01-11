@@ -6,6 +6,8 @@
 #include <QtWidgets>
 #include <QtSql>
 
+namespace {
+
 class Settings : public QSettings
 {
 public:
@@ -15,18 +17,21 @@ public:
     }
 };
 
+} // namespace
+
 MainWindow::MainWindow(QWidget *parent)
   : QWidget(parent)
   , ui(new Ui::MainWindow)
 {
   ui->setupUi(this);
 
-  connect(ui->pb_getVideos, SIGNAL(clicked(bool)), this, SLOT(onGetVideosClicked()));
-
   readSettings();
 
   model = new Model(this);
   ui->tv->setModel(model);
+
+  connect(ui->pb_getVideos, SIGNAL(clicked(bool)), this, SLOT(onGetVideosClicked()));
+  connect(model, SIGNAL(errorMessage(QString)), this, SLOT(onErrorMessage(QString)));
 }
 
 void MainWindow::writeSettings()
@@ -59,40 +64,13 @@ void MainWindow::readSettings()
 void MainWindow::onGetVideosClicked()
 {
     ui->label_statusline->clear();
+    model->readDatabase(ui->le_dbFilenname->text());
+}
 
-    const QString filename = ui->le_dbFilenname->text();
-    QFileInfo checkFile(filename);
-    if (!checkFile.isFile())    {
-        ui->label_statusline->setText("Cannot open database file.");
-        return;
-    }
-
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(filename);
-    const bool ok = db.open();
-    if (!ok) {
-        ui->label_statusline->setText("Cannot read database file.");
-        return;
-    }
-
-    QSqlQuery query;
-    if (!query.exec("SELECT id, vod_path FROM VideoMessages")) {
-        db.close();
-        ui->label_statusline->setText("Cannot query video path from database.");
-        return;
-    }
-
-    model->reset();
-
-    while (query.next()) {
-        const QString id = query.value(0).toString();
-        const QString vodPath = query.value(1).toString();
-        //qDebug() << id << vodPath;
-        model->addItem(id, vodPath);
-    }
-
-
-    db.close();
+void MainWindow::onErrorMessage(const QString &message)
+{
+  ui->label_statusline->setText(message);
+  ui->label_statusline->setStyleSheet("color: red");
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

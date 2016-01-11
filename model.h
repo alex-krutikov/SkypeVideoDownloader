@@ -18,6 +18,7 @@ struct ModelItem
 
 class Model : public QAbstractTableModel
 {
+  Q_OBJECT
 public:
   Model(QObject *parent = 0);
   int rowCount(const QModelIndex &parent = QModelIndex()) const;
@@ -26,7 +27,11 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
   void reset();
+  void readDatabase(const QString &databaseFile);
   void addItem(const QString &id, const QString &vod_path);
+
+signals:
+  void errorMessage(const QString &message);
 
 private:
   QVector<ModelItem> items;

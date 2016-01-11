@@ -82,3 +82,40 @@ void Model::addItem(const QString &id, const QString &vod_path)
   item.vod_path = vod_path;
   items << item;
 }
+
+void Model::readDatabase(const QString &databaseFile)
+{
+    QFileInfo checkFile(databaseFile);
+    if (!checkFile.isFile())    {
+        emit errorMessage("Cannot open database file.");
+        return;
+    }
+
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(databaseFile);
+    const bool ok = db.open();
+    if (!ok) {
+        emit errorMessage("Cannot read database file.");
+        return;
+    }
+
+    QSqlQuery query;
+    if (!query.exec("SELECT id, vod_path FROM VideoMessages")) {
+        db.close();
+        emit errorMessage("Cannot query video path from database.");
+        return;
+    }
+
+    reset();
+
+    while (query.next()) {
+        const QString id = query.value(0).toString();
+        const QString vodPath = query.value(1).toString();
+        //qDebug() << id << vodPath;
+        addItem(id, vodPath);
+    }
+
+
+    db.close();
+
+}
