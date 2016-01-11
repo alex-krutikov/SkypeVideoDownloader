@@ -9,6 +9,10 @@ Application {
 
     files: [
         "pch.h",
+        "mainwindow.h",
+        "model.h",
+        "mainwindow.cpp",
+        "model.cpp",
         "main.cpp",
         "mainwindow.ui",
     ]
