@@ -4,11 +4,10 @@ Application {
     Depends { name: "cpp" }
     Depends { name: "Qt.widgets" }
     Depends { name: "Qt.sql" }
+    Depends { name: "Qt.network" }
 
-    cpp.cxxPrecompiledHeader: "pch.h"
 
     files: [
-        "pch.h",
         "mainwindow.h",
         "model.h",
         "mainwindow.cpp",

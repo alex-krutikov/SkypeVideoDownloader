@@ -31,7 +31,11 @@ MainWindow::MainWindow(QWidget *parent)
   ui->tv->setModel(model);
 
   connect(ui->pb_getVideos, SIGNAL(clicked(bool)), this, SLOT(onGetVideosClicked()));
+  connect(ui->pb_downloadVideos, SIGNAL(clicked(bool)), this, SLOT(onDownloadClicked()));
+  connect(ui->le_outputDir, SIGNAL(textChanged(QString)), this, SLOT(onOutputDirChanged(QString)));
   connect(model, SIGNAL(errorMessage(QString)), this, SLOT(onErrorMessage(QString)));
+
+  model->setOutputDir(ui->le_outputDir->text());
 }
 
 void MainWindow::writeSettings()
@@ -67,10 +71,21 @@ void MainWindow::onGetVideosClicked()
     model->readDatabase(ui->le_dbFilenname->text());
 }
 
+void MainWindow::onDownloadClicked()
+{
+    ui->label_statusline->clear();
+    model->downloadVideos();
+}
+
+void MainWindow::onOutputDirChanged(const QString &outputDir)
+{
+  model->setOutputDir(outputDir);
+}
+
 void MainWindow::onErrorMessage(const QString &message)
 {
-  ui->label_statusline->setText(message);
-  ui->label_statusline->setStyleSheet("color: red");
+    ui->label_statusline->setText(message);
+    ui->label_statusline->setStyleSheet("color: red");
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

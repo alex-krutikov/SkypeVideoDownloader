@@ -24,6 +24,8 @@ private:
 
 private slots:
   void onGetVideosClicked();
+  void onDownloadClicked();
+  void onOutputDirChanged(const QString&);
   void onErrorMessage(const QString &message);
 private:
   std::auto_ptr<Ui::MainWindow> ui;
