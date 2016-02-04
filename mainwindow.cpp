@@ -30,10 +30,10 @@ MainWindow::MainWindow(QWidget *parent)
   model = new Model(this);
   ui->tv->setModel(model);
 
-  connect(ui->pb_getVideos, SIGNAL(clicked(bool)), this, SLOT(onGetVideosClicked()));
-  connect(ui->pb_downloadVideos, SIGNAL(clicked(bool)), this, SLOT(onDownloadClicked()));
-  connect(ui->le_outputDir, SIGNAL(textChanged(QString)), this, SLOT(onOutputDirChanged(QString)));
-  connect(model, SIGNAL(errorMessage(QString)), this, SLOT(onErrorMessage(QString)));
+  connect(ui->pb_getVideos, &QPushButton::clicked, this, &MainWindow::onGetVideosClicked);
+  connect(ui->pb_downloadVideos, &QPushButton::clicked, this, &MainWindow::onDownloadClicked);
+  connect(ui->le_outputDir, &QLineEdit::textChanged, this, &MainWindow::onOutputDirChanged);
+  connect(model, &Model::errorMessage, this, &MainWindow::onErrorMessage);
 
   model->setOutputDir(ui->le_outputDir->text());
 }

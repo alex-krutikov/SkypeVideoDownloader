@@ -3,6 +3,7 @@
 
 #include <QAbstractTableModel>
 #include <QNetworkReply>
+#include <QFile>
 
 class QNetworkAccessManager;
 class QNetworkReply;
@@ -56,6 +57,7 @@ private:
   QString outputDir;
   QNetworkAccessManager *networkManager;
   QNetworkReply *reply;
+  QFile outfile;
   int itemsIndex;
 };
 
