@@ -127,22 +127,21 @@ void Model::initItemStatus(ModelItem *item)
 
 void Model::startItemDownloading()
 {
+    QVector<ModelItem>::iterator it = items.begin();
+
     do {
-        if (itemsIndex >= items.size()) {
+        if (it == items.end()) {
             qDebug() << "FINISHED";
             emit errorMessage("Finished");
             return;
         }
 
-        const ModelItem &item = items.at(itemsIndex);
-        if ((item.status == ModelItem::Ready)
-          ||(item.status == ModelItem::AuthFailed))
+        if ((it->status == ModelItem::Ready)
+          ||(it->status == ModelItem::AuthFailed))
             break;
 
-        itemsIndex++;
+        ++it;
     } while(true);
-
-    const ModelItem &currentItem = items.at(itemsIndex);
 
     qDebug() << "===== new reply";
 
@@ -150,17 +149,17 @@ void Model::startItemDownloading()
         reply->deleteLater();
 
     networkManager->clearAccessCache();
-    reply = networkManager->get(QNetworkRequest(QUrl(currentItem.vod_path)));
+    reply = networkManager->get(QNetworkRequest(QUrl(it->vod_path)));
     connect(reply, &QNetworkReply::downloadProgress, this, &Model::onDownloadProgress);
     connect(reply, &QNetworkReply::readyRead, this, &Model::onReadyRead);
     connect(reply, &QNetworkReply::finished, this, &Model::onReplyFinished);
     connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Model::slotError);
     connect(reply, &QNetworkReply::sslErrors, this, &Model::slotSslErrors);
 
-    outfile.setFileName(outputFilename(outputDir, currentItem.id));
+    outfile.setFileName(outputFilename(outputDir, it->id));
     outfile.open(QIODevice::WriteOnly|QIODevice::Truncate);
 
-    items[itemsIndex].status = ModelItem::InProgress;
+    it->status = ModelItem::InProgress;
     emit dataChanged(index(itemsIndex,0), index(itemsIndex, columnCount() - 1));
 }
 
@@ -192,13 +191,10 @@ void Model::readDatabase(const QString &databaseFile)
     while (query.next()) {
         const QString id = query.value(0).toString();
         const QString vodPath = query.value(1).toString();
-        //qDebug() << id << vodPath;
         addItem(id, vodPath);
     }
 
-
     db.close();
-
 }
 
 void Model::downloadVideos()
